@@ -25,12 +25,9 @@ import itertools
 # Rendered Images of Full Texture
 class Agora_Data(Dataset):
     """Load data under folders"""
-    def __init__(self, group="train"):
-        '''
-        group: "train", "dev", "test
-        '''
+    def __init__(self):
 
-        file_path = "./{}_dataframe.csv".format(group)
+        file_path = "./agora_dataframe.csv"
         self.df = pd.read_csv(file_path)
         
         if torch.cuda.is_available():
@@ -67,11 +64,11 @@ class Agora_Data(Dataset):
         return camera, smplx, img
 
 
-def get_data_loader(args, group):
+def get_data_loader(args):
     """
     Creates training and test data loaders
     """
-    agora_dataset = Agora_Data(group=group)
-    dloader = DataLoader(dataset=agora_dataset, batch_size=args.batch_size, shuffle=train, num_workers=args.num_workers)
+    agora_dataset = Agora_Data()
+    dloader = DataLoader(dataset=agora_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
     return dloader
