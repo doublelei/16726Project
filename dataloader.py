@@ -66,9 +66,6 @@ class Agora_Data(Dataset):
 
 
 def get_data_loader(args):
-    """
-    Creates training and test data loaders
-    """
     agora_dataset = Agora_Data()
     dloader = DataLoader(dataset=agora_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
