@@ -51,11 +51,12 @@ class Agora_Data(Dataset):
     def __getitem__(self, idx):
 
         # random select a camera from the list
-        i = np.random(len(self.cameras), 1)[0]
+        i = np.random.randint(0,len(self.cameras), 1)[0]
         camera = self.cameras[i]
 
         # pose
-        smplx_f = open(self.df.iloc[idx]["smplx_path"], "rb")
+        j = np.random.randint(0,self.df.shape[0], 1)[0]
+        smplx_f = open(self.df.iloc[j]["smplx_path"], "rb")
         smplx = pickle.load(smplx_f, encoding="latin1")
 
         # image
