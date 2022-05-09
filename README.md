@@ -47,7 +47,7 @@ cd stylegan3 & python gen_images.py --outdir=textures --trunc=1 --seeds=2 --netw
 
 ### 2. Render person images by
 ```
-
+python ./data_preparation/render_image.py --texture <path_to_texture_folder> --agora <path_to_agora_folder> --smplx <path_to_smplx> --output <path_to_output_folder>
 ```
 
 ### 3. Transfer the rendered image to real images by
