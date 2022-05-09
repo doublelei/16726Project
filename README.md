@@ -1,12 +1,15 @@
 ## Data Prepare
 ### 1. Prepare SURREAL Texture
-Download [SURREAL DATASET](https://www.di.ens.fr/willow/research/surreal/data/)
+Download [SURREAL DATASET](https://www.di.ens.fr/willow/research/surreal/data/) and put it to stylegan3/datasets
 
 ### 2. Prepare AGORA Images
-Download [AGORA DATASET](https://agora.is.tue.mpg.de/index.html)
+Download [AGORA DATASET](https://agora.is.tue.mpg.de/index.html) and put it to stylegan3/datasets
 
 ### 3. AGORA Preprocess
 
+
+### 4. Prepare SMPLX Model
+Download [SMPLX Model](https://smpl-x.is.tue.mpg.de/download.php) and put it to stylegan3/datasets
 
 
 
