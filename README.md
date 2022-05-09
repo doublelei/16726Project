@@ -24,7 +24,7 @@ cd stylegan3 & python train.py --outdir=training-runs --cfg=stylegan3-t --data=d
 
 ### 3. Train the CycleGAN for real images
 ```
-python ./cyclegan/train.py --dataroot datasets/surreal2agora --name surreal2agora --model cycle_gan --use_wandb
+python cyclegan/train.py --dataroot datasets/surreal2agora --name surreal2agora --model cycle_gan --use_wandb
 ```
 
 ## Inference
