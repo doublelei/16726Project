@@ -24,7 +24,7 @@ cd stylegan3 & python train.py --outdir=training-runs --cfg=stylegan3-t --data=d
 
 ### 3. Train the CycleGAN for real images
 ```
-
+python ./cyclegan/train.py --dataroot datasets/surreal2agora --name surreal2agora --model cycle_gan --use_wandb
 ```
 
 ## Inference
@@ -40,4 +40,5 @@ cd stylegan3 & python gen_images.py --outdir=textures --trunc=1 --seeds=2 --netw
 
 ### 3. Transfer the rendered image to real images by
 ```
+python ./cyclegan/cyclegan_inference.py --input <path_to_rendered_image_folder> --output <path_to_CycleGAN_output_folder>
 ```
