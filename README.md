@@ -37,6 +37,7 @@ cd stylegan3 & python train.py --outdir=training-runs --cfg=stylegan3-t --data=d
 ```
 python cyclegan/train.py --dataroot datasets/surreal2agora --name surreal2agora --model cycle_gan --use_wandb
 ```
+Alternatively, you can download [CycleGAN checkpoints](https://drive.google.com/drive/folders/1olY7J_FKLpSaBdA2e-LmkHvxE1V8oWL8?usp=sharing) and place under `./cyclegan/` for inference use.
 
 ## Inference
 ### 1. Generate textures by
@@ -51,6 +52,7 @@ cd stylegan3 & python gen_images.py --outdir=textures --trunc=1 --seeds=2 --netw
 
 ### 3. Transfer the rendered image to real images by
 ```
+python cyclegan_inference.py --input <path_to_rendered_image_folder> --output <path_to_CycleGAN_output_folder>
 ```
 
 ## Evalute 
