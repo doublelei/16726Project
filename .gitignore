@@ -1,0 +1,11 @@
+10004_w_Amaya_0_0.pkl
+*.pyc
+smplx_models
+result
+output/
+stylegan3/datasets
+stylegan3/training-runs
+stylegan3/inter
+stylegan3/.cache
+stylegan3/texture
+stylegan3/pytorch3d

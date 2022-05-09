@@ -73,8 +73,7 @@ Pre-trained networks are stored as `*.pkl` files that can be referenced using lo
 
 ```.bash
 # Generate an image using pre-trained AFHQv2 model ("Ours" in Figure 1, left).
-python gen_images.py --outdir=out --trunc=1 --seeds=2 \
-    --network=https://api.ngc.nvidia.com/v2/models/nvidia/research/stylegan3/versions/1/files/stylegan3-r-afhqv2-512x512.pkl
+python gen_images.py --outdir=out --trunc=1 --seeds=2 --network=https://api.ngc.nvidia.com/v2/models/nvidia/research/stylegan3/versions/1/files/stylegan3-r-afhqv2-512x512.pkl
 
 # Render a 4x2 grid of interpolations for seeds 0 through 31.
 python gen_video.py --output=lerp.mp4 --trunc=1 --seeds=0-31 --grid=4x2 \
@@ -90,9 +89,9 @@ Outputs from the above commands are placed under `out/*.png`, controlled by `--o
 docker build --tag stylegan3 .
 
 # Run the gen_images.py script using Docker:
-docker run --gpus all -it --rm --user $(id -u):$(id -g) \
-    -v `pwd`:/scratch --workdir /scratch -e HOME=/scratch \
-    stylegan3 \
+docker run --gpus all -it -v `pwd`:/scratch --shm-size=2560m --workdir /scratch -e HOME=/scratch stylegan3 bash
+
+docker run --gpus all -it --rm --user $(id -u):$(id -g) -v `pwd`:/scratch --workdir /scratch -e HOME=/scratch stylegan3 bash \
     python gen_images.py --outdir=out --trunc=1 --seeds=2 \
          --network=https://api.ngc.nvidia.com/v2/models/nvidia/research/stylegan3/versions/1/files/stylegan3-r-afhqv2-512x512.pkl
 ```
@@ -120,7 +119,7 @@ python visualizer.py
 You can use pre-trained networks in your own Python code as follows:
 
 ```.python
-with open('ffhq.pkl', 'rb') as f:
+with open('/home/yutian/16726Project/stylegan3/training-runs/00010-stylegan2-texture-256x256-gpus8-batch16-gamma8.2/network-snapshot-008240.pkl', 'rb') as f:
     G = pickle.load(f)['G_ema'].cuda()  # torch.nn.Module
 z = torch.randn([1, G.z_dim]).cuda()    # latent codes
 c = None                                # class labels (not used in this example)
@@ -148,7 +147,7 @@ Datasets are stored as uncompressed ZIP archives containing uncompressed PNG fil
 
 ```.bash
 # Original 1024x1024 resolution.
-python dataset_tool.py --source=/tmp/images1024x1024 --dest=~/datasets/ffhq-1024x1024.zip
+python dataset_tool.py --source= --dest=~/datasets/ffhq-1024x1024.zip
 
 # Scaled down 256x256 resolution.
 python dataset_tool.py --source=/tmp/images1024x1024 --dest=~/datasets/ffhq-256x256.zip \
@@ -160,7 +159,7 @@ See the [FFHQ README](https://github.com/NVlabs/ffhq-dataset) for information on
 **MetFaces**: Download the [MetFaces dataset](https://github.com/NVlabs/metfaces-dataset) and create a ZIP archive:
 
 ```.bash
-python dataset_tool.py --source=~/downloads/metfaces/images --dest=~/datasets/metfaces-1024x1024.zip
+python dataset_tool.py --source=datasets/MetFace --dest=datasets/MetFace/metfaces-256x256.zip --resolution=256x256
 ```
 
 See the [MetFaces README](https://github.com/NVlabs/metfaces-dataset) for information on how to obtain the unaligned MetFaces dataset images. Use the same steps as above to create a ZIP archive for training and validation.
@@ -185,8 +184,7 @@ You can train new networks using `train.py`. For example:
 
 ```.bash
 # Train StyleGAN3-T for AFHQv2 using 8 GPUs.
-python train.py --outdir=~/training-runs --cfg=stylegan3-t --data=~/datasets/afhqv2-512x512.zip \
-    --gpus=8 --batch=32 --gamma=8.2 --mirror=1
+python train.py --outdir=training-runs --cfg=stylegan3-t --data=datasets/AGORA_image_256x256.zip --gpus=2 --batch=8 --gamma=8.2 --mirror=1
 
 # Fine-tune StyleGAN3-R for MetFaces-U using 1 GPU, starting from the pre-trained FFHQ-U pickle.
 python train.py --outdir=~/training-runs --cfg=stylegan3-r --data=~/datasets/metfacesu-1024x1024.zip \

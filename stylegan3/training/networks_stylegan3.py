@@ -9,6 +9,7 @@
 """Generator architecture from the paper
 "Alias-Free Generative Adversarial Networks"."""
 
+from pickle import NONE
 import numpy as np
 import scipy.signal
 import scipy.optimize
@@ -18,7 +19,26 @@ from torch_utils import persistence
 from torch_utils.ops import conv2d_gradfix
 from torch_utils.ops import filtered_lrelu
 from torch_utils.ops import bias_act
-
+import pandas as pd
+import pytorch3d
+import itertools
+import smplx
+from pytorch3d.renderer import (
+    look_at_view_transform,
+    FoVPerspectiveCameras, 
+    PointLights, 
+    RasterizationSettings, 
+    MeshRenderer, 
+    MeshRasterizer,  
+    SoftPhongShader,
+    Textures
+)
+import glob 
+import pickle
+from pytorch3d.io import load_obj
+from pytorch3d.structures import Meshes
+from PIL import Image
+import random
 #----------------------------------------------------------------------------
 
 @misc.profiled_function
@@ -469,6 +489,7 @@ class SynthesisNetwork(torch.nn.Module):
         x = self.input(ws[0])
         for name, w in zip(self.layer_names, ws[1:]):
             x = getattr(self, name)(x, w, **layer_kwargs)
+            # print(name, x.shape)
         if self.output_scale != 1:
             x = x * self.output_scale
 
@@ -501,15 +522,63 @@ class Generator(torch.nn.Module):
         self.z_dim = z_dim
         self.c_dim = c_dim
         self.w_dim = w_dim
+        print(synthesis_kwargs, img_channels, img_resolution)
         self.img_resolution = img_resolution
         self.img_channels = img_channels
         self.synthesis = SynthesisNetwork(w_dim=w_dim, img_resolution=img_resolution, img_channels=img_channels, **synthesis_kwargs)
         self.num_ws = self.synthesis.num_ws
         self.mapping = MappingNetwork(z_dim=z_dim, c_dim=c_dim, w_dim=w_dim, num_ws=self.num_ws, **mapping_kwargs)
 
+        R, T = look_at_view_transform(5, 0, 0) 
+        cameras = FoVPerspectiveCameras(R=R, T=T)
+        raster_settings = RasterizationSettings(image_size=128, blur_radius=0.0, bin_size=0, faces_per_pixel=1)
+        self.renderer = MeshRenderer(rasterizer=MeshRasterizer(cameras=cameras, raster_settings=raster_settings),
+                                   shader=SoftPhongShader(cameras=cameras, lights=PointLights(location=[[0.0, 0.0, 2.0]])))
+        # self.smpl_model = smplx.create('smplx_models', 'smplx', use_pca=False)
+        verts, faces, aux = load_obj("smplx_uv.obj")
+        self.verts_uvs = aux.verts_uvs  # (1, V, 2)
+        self.faces_uvs = faces.textures_idx  # (1, F, 3)
+        self.faces = faces.verts_idx
+        self.verts = verts
+        
+        self.smplx_files = glob.glob("datasets/smplx_gt/*/*.pkl")
+    
+        # intialize a list of 1008 cameras for random indexing later
+        # alter dist, elev, azim to generate diverse camera viewpoints
+        distances = list(np.linspace(3, 5, 20))
+        elevations = [-45 + 15*i for i in range(7)]
+        azimuth = [180 - 15*i for i in range(24)]
+        camera_feat = list(itertools.product(distances, elevations, azimuth))
+        R_T = [pytorch3d.renderer.cameras.look_at_view_transform(dist=c[0], elev=c[1], azim=c[2]) for c in camera_feat]
+        self.cameras = [pytorch3d.renderer.FoVPerspectiveCameras(R=rt[0], T=rt[1], fov=60) for rt in R_T]
+        self.model = smplx.create('datasets/models', 'smplx', use_pca=False)
+
     def forward(self, z, c, truncation_psi=1, truncation_cutoff=None, update_emas=False, **synthesis_kwargs):
         ws = self.mapping(z, c, truncation_psi=truncation_psi, truncation_cutoff=truncation_cutoff, update_emas=update_emas)
-        img = self.synthesis(ws, update_emas=update_emas, **synthesis_kwargs)
-        return img
+        texture_images = self.synthesis(ws, update_emas=update_emas, **synthesis_kwargs)
+        # return texture_images
+
+        # if vertices is not None:
+        gts = [pickle.load(open(random.choice(self.smplx_files), "rb"), encoding="latin1") for _ in range(len(texture_images))]
+        smplx_gts = [self.model(
+            betas=torch.tensor(gt['betas'][:, :10], dtype=torch.float, device=texture_images.device), 
+            global_orient=torch.tensor(gt['global_orient'], dtype=torch.float, device=texture_images.device),
+            body_pose=torch.tensor(gt['body_pose'], dtype=torch.float, device=texture_images.device),
+            left_hand_pose=torch.tensor(gt['left_hand_pose'], dtype=torch.float, device=texture_images.device),
+            right_hand_pose=torch.tensor(gt['right_hand_pose'], dtype=torch.float, device=texture_images.device),
+            transl=torch.tensor(gt['transl'], dtype=torch.float, device=texture_images.device),
+            expression=torch.tensor(gt['expression'], dtype=torch.float, device=texture_images.device), 
+            jaw_pose=torch.tensor(gt['jaw_pose'], dtype=torch.float, device=texture_images.device),
+            leye_pose=torch.tensor(gt['leye_pose'], dtype=torch.float, device=texture_images.device),
+            reye_pose=torch.tensor(gt['reye_pose'], dtype=torch.float, device=texture_images.device), pose2rot=True) for gt in gts]
+        
+        tex = Textures(verts_uvs=[self.verts_uvs.to(texture_images.device)]*len(texture_images), faces_uvs=[self.faces_uvs.to(texture_images.device)]*len(texture_images), maps=texture_images.permute((0,2,3,1)))
+        # Initialise the mesh with textures
+        meshes = [Meshes(verts=[smplx_gt.vertices.squeeze().to(texture_images.device)], faces=[self.faces.to(texture_images.device)], textures=texture) for smplx_gt, texture in zip(smplx_gts, tex)]
+        
+        self.renderer.to(texture_images.device)
+        rendered_images = torch.cat([self.renderer(mesh, cameras=random.choice(self.cameras).to(texture_images.device)) for mesh in meshes], axis=0)
+
+        return rendered_images.permute((0, 3, 1, 2))[:, :3, :, :]
 
 #----------------------------------------------------------------------------

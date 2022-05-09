@@ -19,7 +19,7 @@ import torch
 
 #----------------------------------------------------------------------------
 
-enabled = False  # Enable the custom op by setting this to true.
+enabled = True  # Enable the custom op by setting this to true.
 
 #----------------------------------------------------------------------------
 
@@ -31,6 +31,10 @@ def grid_sample(input, grid):
 #----------------------------------------------------------------------------
 
 def _should_use_custom_op():
+    # if not enabled:
+    #     return False
+    # if any(torch.__version__.startswith(x) for x in ['1.7.', '1.8.', '1.9']):
+    #     return True
     return enabled
 
 #----------------------------------------------------------------------------
