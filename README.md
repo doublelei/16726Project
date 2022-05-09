@@ -1,15 +1,12 @@
 ## Data Prepare
 ### 1. Prepare SURREAL Texture
-Download [SURREAL DATASET](https://www.di.ens.fr/willow/research/surreal/data/) and put it to stylegan3/datasets
+Download [SURREAL DATASET](https://www.di.ens.fr/willow/research/surreal/data/) and put it to datasets
 
 ### 2. Prepare AGORA Images
-Download [AGORA DATASET](https://agora.is.tue.mpg.de/index.html) and put it to stylegan3/datasets
+Download [AGORA DATASET](https://agora.is.tue.mpg.de/index.html) and put it to datasets
 
-### 3. AGORA Preprocess
-
-
-### 4. Prepare SMPLX Model
-Download [SMPLX Model](https://smpl-x.is.tue.mpg.de/download.php) and put it to stylegan3/datasets
+### 3. Prepare SMPLX Model
+Download [SMPLX Model](https://smpl-x.is.tue.mpg.de/download.php) and put it to datasets
 
 
 
@@ -28,7 +25,7 @@ pip install smplx
 
 ### 1. Pretrain the StyleGAN3 by
 ```
-cd stylegan3 & python train.py --outdir=training-runs --cfg=stylegan3-t --data==/datasetsall_texture.zip --gpus=1 --batch=4 --gamma=8.2 --mirror=1 --rendered=False 
+cd stylegan3 & python train.py --outdir=training-runs --cfg=stylegan3-t --data==/datasets/all_texture.zip --gpus=1 --batch=4 --gamma=8.2 --mirror=1 --rendered=False 
 ```
 
 ### 2. Train the StyleGAN3 for rendered images 
@@ -50,7 +47,7 @@ cd stylegan3 & python gen_images.py --outdir=textures --trunc=1 --seeds=2 --netw
 
 ### 2. Render person images by
 ```
-python ./data_preparation/render_image.py --texture <path_to_texture_folder> --agora <path_to_agora_folder> --smplx <path_to_smplx> --output <path_to_output_folder>
+python data_preparation/render_image.py --texture <path_to_texture_folder> --agora <path_to_agora_folder> --smplx <path_to_smplx> --output <path_to_output_folder>
 ```
 
 ### 3. Transfer the rendered image to real images by
