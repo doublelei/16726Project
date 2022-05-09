@@ -41,3 +41,9 @@ cd stylegan3 & python gen_images.py --outdir=textures --trunc=1 --seeds=2 --netw
 ### 3. Transfer the rendered image to real images by
 ```
 ```
+
+## Evalute 
+### Calculate FID by
+```
+python evaluate.py REAL_PATH GENERATED_PATH
+```
